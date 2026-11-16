@@ -33,12 +33,15 @@ jobs:
           gradle --no-daemon lintRelease || true
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET
-          for path in glob.glob('app/build/reports/lint-results-*.xml'):
+          paths = glob.glob('app/build/reports/lint-results*.xml')
+          print('lint reports:', paths)
+          for path in paths:
               for issue in ET.parse(path).getroot().iter('issue'):
                   if issue.get('severity') in ('Error', 'Fatal') or issue.get('id') in ('NewApi', 'InlinedApi', 'MissingPermission'):
                       loc = issue.find('location')
                       where = (loc.get('file', '').split('/app/')[-1] + ':' + loc.get('line', '?')) if loc is not None else ''
                       print(issue.get('severity'), issue.get('id'), where, '-', issue.get('message'))
+              print('total issues:', len(list(ET.parse(path).getroot().iter('issue'))))
           PY
 
       - name: Sign APK
