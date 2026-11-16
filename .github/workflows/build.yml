@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -26,6 +26,20 @@ jobs:
 
       - name: Build release APK
         run: gradle --no-daemon assembleRelease
+
+      - name: Lint (informational)
+        continue-on-error: true
+        run: |
+          gradle --no-daemon lintRelease || true
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          for path in glob.glob('app/build/reports/lint-results-*.xml'):
+              for issue in ET.parse(path).getroot().iter('issue'):
+                  if issue.get('severity') in ('Error', 'Fatal') or issue.get('id') in ('NewApi', 'InlinedApi', 'MissingPermission'):
+                      loc = issue.find('location')
+                      where = (loc.get('file', '').split('/app/')[-1] + ':' + loc.get('line', '?')) if loc is not None else ''
+                      print(issue.get('severity'), issue.get('id'), where, '-', issue.get('message'))
+          PY
 
       - name: Sign APK
         env:
@@ -67,3 +81,13 @@ jobs:
           name: PackX-Pro-APK-unsigned
           path: unsigned/*.apk
           if-no-files-found: error
+
+      - name: Publish download page
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(grep -oP "versionName '\K[^']+" app/build.gradle)"
+          gh release delete latest-build --yes --cleanup-tag >/dev/null 2>&1 || true
+          gh release create latest-build dist/*.apk --target "$GITHUB_SHA" \
+            --title "PackX Pro v$VERSION" \
+            --notes "Built automatically from commit ${GITHUB_SHA::7}. See README for what is new."
