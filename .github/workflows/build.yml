@@ -37,6 +37,8 @@ jobs:
           VERSION="$(grep -oP "versionName '\K[^']+" app/build.gradle)"
           mkdir -p dist
           "$TOOLS/zipalign" -f -p 4 "$UNSIGNED" dist/aligned.apk
+          # Kept as its own artifact so it can be signed offline with tools/apk_v2_sign.py.
+          mkdir -p unsigned && cp dist/aligned.apk "unsigned/PackX-Pro-v$VERSION-unsigned.apk"
           if [ -n "${PACKX_RELEASE_KEY_PEM:-}" ]; then
             printf '%s\n' "$PACKX_RELEASE_KEY_PEM" > "$RUNNER_TEMP/key.pem"
             openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$RUNNER_TEMP/key.pem" -out "$RUNNER_TEMP/key.pk8"
@@ -58,4 +60,10 @@ jobs:
         with:
           name: PackX-Pro-APK
           path: dist/*.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PackX-Pro-APK-unsigned
+          path: unsigned/*.apk
           if-no-files-found: error
