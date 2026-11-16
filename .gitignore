@@ -1,0 +1,16 @@
+*.iml
+.gradle/
+.idea/
+local.properties
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Never commit the private signing key. Keep it offline or as a CI secret.
+signing/*key*
+*.jks
+*.keystore
+*.pk8
+*.p12

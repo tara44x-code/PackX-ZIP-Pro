@@ -1,0 +1,47 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.packx.pro'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.packx.pro'
+        minSdk 26
+        targetSdk 35
+        versionCode 10
+        versionName '6.0.0'
+        ndk {
+            // The bundled 7-Zip engine exists for these ABIs only.
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+    }
+
+    buildTypes {
+        release {
+            // The APK is dominated by the native engine, so shrinking Java code gains little
+            // and is not worth the risk of stripping something.
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packagingOptions {
+        jniLibs {
+            // The engine is started as a process, so it must be extracted to disk on install.
+            useLegacyPackaging true
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.13.1'
+}
